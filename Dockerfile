@@ -1,14 +1,40 @@
-FROM openjdk:8-jdk-alpine
+FROM ubuntu:17.04
 
-MAINTAINER Ivan Subotic <ivan.suboticATunibas.ch>
+LABEL maintainer="ivan.subotic@unibas.ch"
 
-ENV SBT_VERSION 0.13.16
-ENV SBT_HOME /usr/local/sbt
-ENV PATH ${PATH}:${SBT_HOME}/bin
+# Env variables
+ENV SCALA_VERSION 2.12.4
+ENV SBT_VERSION 0.13.6
+
+RUN \
+    apt-get update && apt-get -y install \
+    git \
+    openjdk-8-jdk \
+    curl \
+    sed \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+
+# Copy ivy2 cache
+COPY ivy-cache/ /root/.ivy2
+
+# Scala expects this file
+RUN touch /usr/lib/jvm/java-8-openjdk-amd64/release
+
+# Install Scala by piping curl directly in tar
+RUN \
+  curl -fsL https://downloads.typesafe.com/scala/$SCALA_VERSION/scala-$SCALA_VERSION.tgz | tar xfz - -C /root/ && \
+  echo >> /root/.bashrc && \
+  echo "export PATH=~/scala-$SCALA_VERSION/bin:$PATH" >> /root/.bashrc
 
 # Install sbt
-RUN curl -sL "http://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz" | gunzip | tar -x -C /usr/local && \
-    echo -ne "- with sbt $SBT_VERSION\n" >> /root/.built
-    
-# Copy cache
-COPY ivy-cache/ /root/.ivy2
+RUN \
+  curl -L -o sbt-$SBT_VERSION.deb https://dl.bintray.com/sbt/debian/sbt-$SBT_VERSION.deb && \
+  dpkg -i sbt-$SBT_VERSION.deb && \
+  rm sbt-$SBT_VERSION.deb && \
+  apt-get update && \
+  apt-get install sbt && \
+  sbt sbtVersion
