@@ -1,10 +1,10 @@
-FROM ubuntu:17.04
+FROM ubuntu:16.04
 
 LABEL maintainer="ivan.subotic@unibas.ch"
 
 # Env variables
 ENV SCALA_VERSION 2.12.4
-ENV SBT_VERSION 0.13.6
+ENV SBT_VERSION 1.1.0
 
 RUN \
     apt-get update && apt-get -y install \
